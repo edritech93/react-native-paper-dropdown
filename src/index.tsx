@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, {
   type ReactNode,
   forwardRef,
@@ -8,11 +9,11 @@ import React, {
 } from 'react';
 import {
   type LayoutChangeEvent,
-  ScrollView,
   type TextStyle,
   TouchableWithoutFeedback,
   View,
   type ViewStyle,
+  FlatList,
   StyleSheet,
 } from 'react-native';
 import {
@@ -139,6 +140,54 @@ const DropDown = forwardRef<TouchableWithoutFeedback, DropDownPropsInterface>(
       [value]
     );
 
+    const renderItem = useCallback(
+      ({ item }: any) => (
+        <Fragment key={item.value}>
+          <TouchableRipple
+            style={styles.itemRipple}
+            onPress={() => {
+              setActive(item.value);
+              if (onDismiss) {
+                onDismiss();
+              }
+            }}
+          >
+            <Fragment>
+              <Menu.Item
+                titleStyle={{
+                  color: isActive(item.value)
+                    ? activeColor || theme.colors.primary
+                    : theme.colors.onBackground,
+                  ...(isActive(item.value)
+                    ? dropDownItemSelectedTextStyle
+                    : dropDownItemTextStyle),
+                }}
+                title={item.custom || item.label}
+                style={{
+                  flex: 1,
+                  maxWidth: inputLayout?.width,
+                  ...(isActive(item.value)
+                    ? dropDownItemSelectedStyle
+                    : dropDownItemStyle),
+                }}
+              />
+              {multiSelect && (
+                <Checkbox.Android
+                  theme={{
+                    colors: { accent: theme.colors.primary },
+                  }}
+                  status={isActive(item.value) ? 'checked' : 'unchecked'}
+                  onPress={() => setActive(item.value)}
+                />
+              )}
+            </Fragment>
+          </TouchableRipple>
+          <Divider />
+        </Fragment>
+      ),
+      []
+    );
+
     return (
       <Menu
         visible={visible}
@@ -175,7 +224,7 @@ const DropDown = forwardRef<TouchableWithoutFeedback, DropDownPropsInterface>(
           ...dropDownStyle,
         }}
       >
-        <ScrollView
+        <FlatList
           bounces={false}
           style={{
             ...(dropDownContainerHeight
@@ -186,54 +235,10 @@ const DropDown = forwardRef<TouchableWithoutFeedback, DropDownPropsInterface>(
                   maxHeight: dropDownContainerMaxHeight || 200,
                 }),
           }}
-        >
-          {list.map((_item, _index) => (
-            <Fragment key={_item.value}>
-              <TouchableRipple
-                style={styles.itemRipple}
-                onPress={() => {
-                  setActive(_item.value);
-                  if (onDismiss) {
-                    onDismiss();
-                  }
-                }}
-              >
-                <Fragment>
-                  <Menu.Item
-                    titleStyle={{
-                      color: isActive(_item.value)
-                        ? activeColor || theme?.colors.primary
-                        : theme?.colors.onBackground,
-                      ...(isActive(_item.value)
-                        ? dropDownItemSelectedTextStyle
-                        : dropDownItemTextStyle),
-                    }}
-                    title={_item.custom || _item.label}
-                    style={[
-                      styles.flex1,
-                      {
-                        maxWidth: inputLayout?.width,
-                        ...(isActive(_item.value)
-                          ? dropDownItemSelectedStyle
-                          : dropDownItemStyle),
-                      },
-                    ]}
-                  />
-                  {multiSelect && (
-                    <Checkbox.Android
-                      theme={{
-                        colors: { accent: theme?.colors.primary },
-                      }}
-                      status={isActive(_item.value) ? 'checked' : 'unchecked'}
-                      onPress={() => setActive(_item.value)}
-                    />
-                  )}
-                </Fragment>
-              </TouchableRipple>
-              <Divider />
-            </Fragment>
-          ))}
-        </ScrollView>
+          data={list}
+          keyExtractor={(item) => item.value.toString()}
+          renderItem={renderItem}
+        />
       </Menu>
     );
   }
